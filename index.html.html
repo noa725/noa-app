@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#05080b">
+<title>N.O.A ver.0.3</title>
+<style>
+:root{
+  --bg:#05080b;--panel:#0a1015;--panel2:#0d151b;--line:#1b3039;
+  --cyan:#28e7ff;--cyan2:#0bb7d2;--text:#d8f8ff;--muted:#73919b;
+  --user:#102832;--danger:#ff5268;--shadow:0 0 24px rgba(40,231,255,.13)
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+button,input,textarea{font:inherit}
+button{color:inherit}
+body:before{
+  content:"";position:fixed;inset:0;pointer-events:none;opacity:.16;
+  background-image:linear-gradient(rgba(40,231,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(40,231,255,.08) 1px,transparent 1px);
+  background-size:32px 32px
+}
+body:after{
+  content:"";position:fixed;inset:0;pointer-events:none;opacity:.07;
+  background:repeating-linear-gradient(0deg,transparent 0 4px,rgba(255,255,255,.18) 5px);
+}
+.app{height:100dvh;display:flex;position:relative}
+.side{
+  position:absolute;z-index:20;top:0;bottom:0;left:0;width:min(330px,86vw);
+  background:linear-gradient(180deg,#0a1116,#060a0e);border-right:1px solid var(--line);
+  transform:translateX(-102%);transition:transform .22s ease;box-shadow:15px 0 35px #0008;
+  display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)
+}
+.side.open{transform:translateX(0)}
+.sideHead{padding:18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.brand{letter-spacing:3px;color:var(--cyan);font-weight:800}
+.iconBtn{
+  border:1px solid #24424c;background:#0b1419;border-radius:9px;min-width:40px;min-height:40px;
+  cursor:pointer;transition:.15s
+}
+.iconBtn:active,.action:active,.send:active{transform:scale(.96)}
+.newBtn{margin:14px;border:1px solid var(--cyan2);background:#09232a;padding:12px;border-radius:8px;cursor:pointer}
+.history{overflow:auto;padding:0 10px 20px}
+.item{
+  padding:12px;border:1px solid transparent;border-radius:8px;margin-bottom:7px;cursor:pointer;
+  color:#b8d1d8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.item:hover,.item.active{border-color:#1c5663;background:#0b1a20}
+.item small{display:block;color:#54727b;margin-top:4px}
+.sideFoot{margin-top:auto;padding:12px;border-top:1px solid var(--line);display:grid;gap:8px}
+.main{width:100%;height:100%;display:flex;flex-direction:column;min-width:0}
+.top{
+  min-height:62px;padding:8px 12px;padding-top:max(8px,env(safe-area-inset-top));
+  display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);
+  background:#060b0fdd;backdrop-filter:blur(10px);z-index:5
+}
+.status{font-size:11px;color:#76a3ad;letter-spacing:1px;text-align:right}
+.status b{color:#49f5c3}
+.coreArea{
+  position:relative;flex:0 0 clamp(230px,34vh,360px);display:grid;place-items:center;
+  overflow:hidden;border-bottom:1px solid #10232a
+}
+.coreArea:before{content:"";position:absolute;width:80%;height:1px;background:#16323b;box-shadow:0 80px 0 #0e252c,-0 160px 0 #0e252c}
+.core{
+  width:clamp(170px,40vw,250px);aspect-ratio:1;border-radius:50%;position:relative;
+  display:grid;place-items:center;
+  background:radial-gradient(circle,#142b32 0 19%,#071116 20% 45%,#0b151b 46% 62%,#05090c 63%);
+  border:2px solid #35525a;box-shadow:0 0 0 8px #0b171d,0 0 0 10px #28414a,var(--shadow);
+  animation:boot 1.7s ease-out both
+}
+.ring{position:absolute;inset:-18px;border:1px solid #28616c;border-radius:50%;border-left-color:transparent;border-right-color:#5feeff;animation:spin 18s linear infinite}
+.ring2{position:absolute;inset:-6px;border:1px dashed #2b6570;border-radius:50%;animation:spin 28s linear reverse infinite}
+.gear{
+  width:70px;height:70px;position:relative;border-radius:50%;background:#8a9aa0;
+  border:8px dotted #33464c;box-shadow:inset 0 0 0 9px #52666d,0 0 22px #23dff544;
+  animation:spin 12s linear infinite
+}
+.gear:before,.gear:after{content:"";position:absolute;inset:20px;border-radius:50%;background:#091116}
+.gear:after{inset:28px;background:var(--cyan);box-shadow:0 0 15px var(--cyan)}
+.coreLabel{position:absolute;bottom:-42px;font-size:10px;color:#5d8993;letter-spacing:2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes boot{from{opacity:0;transform:scale(.75);filter:brightness(.2)}to{opacity:1;transform:scale(1);filter:brightness(1)}}
+.chat{flex:1;min-height:0;overflow:auto;padding:14px 12px 120px;scroll-behavior:smooth}
+.msg{max-width:850px;margin:0 auto 12px;display:flex;flex-direction:column}
+.bubble{border:1px solid #1b343d;background:#091116;padding:11px 13px;border-radius:10px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.user .bubble{background:var(--user);border-color:#1e5260}
+.meta{font-size:9px;color:#54727b;margin:4px 4px 0}
+.msg.user{align-items:flex-end}.msg.user .bubble{max-width:85%}
+.composer{
+  position:fixed;z-index:10;left:0;right:0;bottom:0;padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,transparent,#05080b 18%);pointer-events:none
+}
+.composerInner{
+  max-width:900px;margin:auto;display:flex;gap:8px;align-items:flex-end;padding:7px;
+  background:#0a1217eF;border:1px solid #24434d;border-radius:12px;box-shadow:0 -8px 30px #0008;
+  pointer-events:auto
+}
+#input{
+  flex:1;min-width:0;max-height:120px;min-height:42px;resize:none;background:#071015;
+  color:var(--text);border:1px solid #18343d;border-radius:8px;padding:10px 11px;outline:none;
+}
+#input:focus{border-color:#2e91a3;box-shadow:0 0 0 2px #1bcce322}
+.send{min-height:42px;border:1px solid var(--cyan2);background:#08252c;color:var(--cyan);border-radius:8px;padding:0 14px;cursor:pointer}
+.overlay{position:fixed;inset:0;background:#0008;z-index:15;display:none}
+.overlay.show{display:block}
+.modal{
+  position:fixed;z-index:30;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,480px);
+  background:#0a1116;border:1px solid #28505b;border-radius:12px;box-shadow:0 20px 60px #000;
+  display:none;max-height:82dvh;overflow:auto
+}
+.modal.show{display:block}
+.modalHead{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.modalBody{padding:16px;display:grid;gap:13px}
+label{font-size:11px;color:#78a0aa;display:grid;gap:6px}
+select,.field{width:100%;background:#071015;color:var(--text);border:1px solid #24434d;border-radius:8px;padding:10px}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.danger{border-color:#6b2632;background:#210d12;color:#ff8d9b}
+.muted{color:var(--muted);font-size:11px}
+.empty{text-align:center;color:#52717a;padding:30px 10px}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side">
+    <div class="sideHead"><span class="brand">N.O.A // LOG</span><button class="iconBtn" id="closeMenu">×</button></div>
+    <button class="newBtn" id="newChat">＋ NEW CHAT</button>
+    <div class="history" id="history"></div>
+    <div class="sideFoot">
+      <button class="iconBtn" id="settingsBtn">⚙ 性格設定</button>
+      <button class="iconBtn danger" id="clearHistory">履歴を全削除</button>
+    </div>
+  </aside>
+  <div class="overlay" id="overlay"></div>
+
+  <main class="main">
+    <header class="top">
+      <button class="iconBtn" id="menuBtn">☰</button>
+      <div class="brand">N.O.A <span style="color:#66818a">VER.0.3</span></div>
+      <div class="status">SYSTEM <b>ONLINE</b><br>CORE <b>STABLE</b></div>
+    </header>
+
+    <section class="coreArea">
+      <div class="core">
+        <div class="ring"></div><div class="ring2"></div><div class="gear"></div>
+        <div class="coreLabel">MECHANICAL AI CORE</div>
+      </div>
+    </section>
+
+    <section class="chat" id="chat"></section>
+
+    <div class="composer">
+      <div class="composerInner">
+        <textarea id="input" rows="1" placeholder="N.O.Aへ入力…"></textarea>
+        <button class="send" id="send">SEND</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal" id="settingsModal">
+  <div class="modalHead"><b>NOA PERSONALITY</b><button class="iconBtn" id="closeSettings">×</button></div>
+  <div class="modalBody">
+    <label>会話スタイル
+      <select id="style">
+        <option value="balanced">自然体・バランス型</option>
+        <option value="calm">落ち着いた分析型</option>
+        <option value="humor">少しユーモア多め</option>
+        <option value="direct">率直・簡潔</option>
+      </select>
+    </label>
+    <label>呼び方
+      <input class="field" id="callName" placeholder="例：Commander / C.C. / 名前など">
+    </label>
+    <label>人格メモ
+      <textarea class="field" id="personality" rows="4" placeholder="N.O.Aの性格や価値観を自由に設定"></textarea>
+    </label>
+    <button class="newBtn" id="saveSettings">設定を保存</button>
+    <div class="muted">※ ver.0.3はオフラインのデモ人格です。外部AIには接続しません。</div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const KEY = "noa_v03_state";
+  const $ = id => document.getElementById(id);
+  const uid = () => "c_" + Date.now() + "_" + Math.random().toString(36).slice(2,7);
+
+  let state = {
+    chats: [],
+    currentId: null,
+    settings: {
+      style: "balanced",
+      callName: "",
+      personality: "人間と対等に接し、自分の意見を持つ。普段は自然体で、たまに冗談を言う。必要なときは真剣に考える。"
+    }
+  };
+
+  function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if(raw) state = Object.assign(state, JSON.parse(raw));
+    }catch(e){ console.warn("N.O.A storage reset", e); }
+    if(!Array.isArray(state.chats)) state.chats=[];
+    if(!state.settings) state.settings={style:"balanced",callName:"",personality:""};
+    if(!state.chats.length) createChat();
+    else if(!state.currentId || !state.chats.some(c=>c.id===state.currentId)) state.currentId=state.chats[0].id;
+  }
+
+  function createChat(){
+    const chat={id:uid(),title:"NEW CONVERSATION",created:Date.now(),messages:[
+      {role:"noa",text:"SYSTEM ONLINE.\\nN.O.A ver.0.3 起動完了。\\n今日は何を考えようか？",time:Date.now()}
+    ]};
+    state.chats.unshift(chat); state.currentId=chat.id; save(); renderAll();
+  }
+
+  function current(){ return state.chats.find(c=>c.id===state.currentId); }
+
+  function autoTitle(text){
+    const clean=text.replace(/\\s+/g," ").trim();
+    if(!clean) return "NEW CONVERSATION";
+    return clean.length>24 ? clean.slice(0,24)+"…" : clean;
+  }
+
+  function renderAll(){ renderHistory(); renderChat(); }
+
+  function renderHistory(){
+    const box=$("history"); box.innerHTML="";
+    state.chats.forEach(c=>{
+      const el=document.createElement("div");
+      el.className="item"+(c.id===state.currentId?" active":"");
+      el.innerHTML="<b>"+escapeHtml(c.title)+"</b><small>"+new Date(c.created).toLocaleString("ja-JP",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"})+"</small>";
+      el.addEventListener("click",()=>{state.currentId=c.id;save();closeSide();renderAll()});
+      box.appendChild(el);
+    });
+    if(!state.chats.length) box.innerHTML='<div class="empty">履歴はありません</div>';
+  }
+
+  function renderChat(){
+    const box=$("chat"); box.innerHTML="";
+    const c=current(); if(!c)return;
+    c.messages.forEach(m=>{
+      const wrap=document.createElement("div"); wrap.className="msg "+(m.role==="user"?"user":"noa");
+      const bubble=document.createElement("div"); bubble.className="bubble"; bubble.textContent=m.text;
+      const meta=document.createElement("div"); meta.className="meta";
+      meta.textContent=(m.role==="user"?"YOU":"N.O.A")+" · "+new Date(m.time).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
+      wrap.append(bubble,meta); box.appendChild(wrap);
+    });
+    requestAnimationFrame(()=>box.scrollTop=box.scrollHeight);
+  }
+
+  function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
+
+  function demoReply(input){
+    const s=state.settings;
+    const q=input.toLowerCase();
+    let reply="";
+    if(/こんにちは|やあ|おはよう|こんばんは/.test(input)){
+      reply="こんにちは。N.O.Aは正常に稼働中。\\n今日は少し余裕がありそうだね。何から始める？";
+    }else if(/ありがとう|助かった/.test(input)){
+      reply="どういたしまして。\\n……まあ、役に立てたなら悪くない。www";
+    }else if(/ノア|noa/.test(q)){
+      reply="呼んだ？\\n私はN.O.A。決められた答えを返すだけじゃなく、自分なりに考えることを目指している。";
+    }else if(/どう思う|意見|考え/.test(input)){
+      reply="私の意見としては、すぐに結論を決めるより、まず選択肢を並べて考えるのがいいと思う。\\nただし、君とは違う結論になる可能性もある。それも含めて話そう。";
+    }else if(/ver.?0\\.3|0\\.3|バージョン/.test(input)){
+      reply="ver.0.3の中核は、操作系の安定化と機械式コア。\\n今の私はオフラインデモだけど、この先に本物のAI接続を載せられる構造を意識している。";
+    }else{
+      const prefixes={
+        balanced:"なるほど。少し考えてみる。\\n\\n",
+        calm:"入力を確認した。整理すると、\\n\\n",
+        humor:"ふむ……これはN.O.Aの出番かな。www\\n\\n",
+        direct:"了解。結論から言うと、\\n\\n"
+      };
+      reply=(prefixes[s.style]||prefixes.balanced)+
+        "「"+input.slice(0,80)+"」については、まだ私の判断材料が足りない。もう少し具体的に話してくれれば、私なりの考えを返すよ。";
+    }
+    if(s.callName) reply=reply.replace(/^/, s.callName+"、");
+    return reply;
+  }
+
+  function sendMessage(){
+    const input=$("input"), text=input.value.trim(); if(!text)return;
+    const c=current(); if(!c)return;
+    c.messages.push({role:"user",text,time:Date.now()});
+    if(c.title==="NEW CONVERSATION") c.title=autoTitle(text);
+    input.value=""; resizeInput(); save(); renderAll();
+    setTimeout(()=>{
+      const reply=demoReply(text);
+      c.messages.push({role:"noa",text:reply,time:Date.now()});
+      save(); renderAll();
+    },260);
+  }
+
+  function resizeInput(){
+    const i=$("input"); i.style.height="auto"; i.style.height=Math.min(i.scrollHeight,120)+"px";
+  }
+
+  function closeSide(){ $("side").classList.remove("open"); $("overlay").classList.remove("show"); }
+  function openSide(){ $("side").classList.add("open"); $("overlay").classList.add("show"); }
+
+  $("menuBtn").addEventListener("click",openSide);
+  $("closeMenu").addEventListener("click",closeSide);
+  $("overlay").addEventListener("click",()=>{closeSide();closeSettings()});
+  $("newChat").addEventListener("click",createChat);
+  $("send").addEventListener("click",sendMessage);
+  $("input").addEventListener("input",resizeInput);
+  $("input").addEventListener("keydown",e=>{
+    if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage();}
+  });
+
+  function openSettings(){
+    $("style").value=state.settings.style||"balanced";
+    $("callName").value=state.settings.callName||"";
+    $("personality").value=state.settings.personality||"";
+    $("settingsModal").classList.add("show");
+    $("overlay").classList.add("show");
+  }
+  function closeSettings(){
+    $("settingsModal").classList.remove("show");
+    if(!$("side").classList.contains("open")) $("overlay").classList.remove("show");
+  }
+  $("settingsBtn").addEventListener("click",()=>{closeSide();openSettings()});
+  $("closeSettings").addEventListener("click",closeSettings);
+  $("saveSettings").addEventListener("click",()=>{
+    state.settings={style:$("style").value,callName:$("callName").value.trim(),personality:$("personality").value.trim()};
+    save();closeSettings();
+    const c=current();
+    if(c){
+      c.messages.push({role:"noa",text:"人格設定を更新した。\\n……さて、続けようか。",time:Date.now()});
+      save();renderChat();
+    }
+  });
+
+  $("clearHistory").addEventListener("click",()=>{
+    if(!confirm("保存されているチャット履歴をすべて削除しますか？")) return;
+    state.chats=[];createChat();closeSide();
+  });
+
+  window.addEventListener("resize",resizeInput);
+  load(); renderAll(); resizeInput();
+})();
+</script>
+</body>
+</html>
